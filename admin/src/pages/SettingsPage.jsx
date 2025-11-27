@@ -717,7 +717,7 @@ const SettingsPage = () => {
                 {hasChanges ? t('settings.saveAndApply', 'Save & Apply') : t('settings.saved', 'Saved')}
               </Button>
             </ResponsiveButtonGroup>
-          </Flex>
+            </Flex>
         </ResponsiveHeader>
 
         <ResponsiveCard background="neutral0" shadow="filterShadow" hasRadius>
@@ -780,10 +780,10 @@ const SettingsPage = () => {
               <ResponsiveField>
                 <Field.Label>{t('connection.maxConnections', 'Max Connections')}</Field.Label>
                 <InputWrapper>
-                  <NumberInput
-                    value={settings.connection?.maxConnections || 1000}
-                    onValueChange={(value) => updateConnection('maxConnections', value)}
-                  />
+                <NumberInput
+                  value={settings.connection?.maxConnections || 1000}
+                  onValueChange={(value) => updateConnection('maxConnections', value)}
+                />
                 </InputWrapper>
               </ResponsiveField>
             </Grid.Item>
@@ -791,10 +791,10 @@ const SettingsPage = () => {
               <ResponsiveField>
                 <Field.Label>{t('connection.pingTimeout', 'Ping Timeout (ms)')}</Field.Label>
                 <InputWrapper>
-                  <NumberInput
-                    value={settings.connection?.pingTimeout || 20000}
-                    onValueChange={(value) => updateConnection('pingTimeout', value)}
-                  />
+                <NumberInput
+                  value={settings.connection?.pingTimeout || 20000}
+                  onValueChange={(value) => updateConnection('pingTimeout', value)}
+                />
                 </InputWrapper>
               </ResponsiveField>
             </Grid.Item>
@@ -802,10 +802,10 @@ const SettingsPage = () => {
               <ResponsiveField>
                 <Field.Label>{t('connection.pingInterval', 'Ping Interval (ms)')}</Field.Label>
                 <InputWrapper>
-                  <NumberInput
-                    value={settings.connection?.pingInterval || 25000}
-                    onValueChange={(value) => updateConnection('pingInterval', value)}
-                  />
+                <NumberInput
+                  value={settings.connection?.pingInterval || 25000}
+                  onValueChange={(value) => updateConnection('pingInterval', value)}
+                />
                 </InputWrapper>
               </ResponsiveField>
             </Grid.Item>
@@ -813,10 +813,10 @@ const SettingsPage = () => {
               <ResponsiveField>
                 <Field.Label>{t('connection.connectionTimeout', 'Connection Timeout (ms)')}</Field.Label>
                 <InputWrapper>
-                  <NumberInput
-                    value={settings.connection?.connectionTimeout || 45000}
-                    onValueChange={(value) => updateConnection('connectionTimeout', value)}
-                  />
+                <NumberInput
+                  value={settings.connection?.connectionTimeout || 45000}
+                  onValueChange={(value) => updateConnection('connectionTimeout', value)}
+                />
                 </InputWrapper>
               </ResponsiveField>
             </Grid.Item>
@@ -1421,11 +1421,11 @@ const SettingsPage = () => {
                 <ResponsiveField>
                   <Field.Label>{t('redis.url', 'Redis URL')}</Field.Label>
                   <InputWrapper>
-                    <TextInput
-                      value={settings.redis?.url || 'redis://localhost:6379'}
-                      onChange={(e) => updateRedis('url', e.target.value)}
-                      placeholder="redis://localhost:6379"
-                    />
+                  <TextInput
+                    value={settings.redis?.url || 'redis://localhost:6379'}
+                    onChange={(e) => updateRedis('url', e.target.value)}
+                    placeholder="redis://localhost:6379"
+                  />
                   </InputWrapper>
                 </ResponsiveField>
               </Grid.Item>
@@ -1597,11 +1597,11 @@ const SettingsPage = () => {
               <Grid.Item col={12} s={12}>
                 <ResponsiveField>
                   <InputWrapper>
-                    <NumberInput
-                      label={t('monitoring.maxLogSize', 'Max Log Size')}
-                      value={settings.monitoring?.maxEventLogSize || 100}
-                      onValueChange={(value) => updateMonitoring('maxEventLogSize', value)}
-                    />
+                <NumberInput
+                  label={t('monitoring.maxLogSize', 'Max Log Size')}
+                  value={settings.monitoring?.maxEventLogSize || 100}
+                  onValueChange={(value) => updateMonitoring('maxEventLogSize', value)}
+                />
                   </InputWrapper>
                 </ResponsiveField>
               </Grid.Item>
