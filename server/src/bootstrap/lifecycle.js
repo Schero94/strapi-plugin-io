@@ -1,19 +1,24 @@
 'use strict';
 
-const transactionCtx = (() => {
-	try {
-		const runtimeRequire = eval('require');
-		return runtimeRequire('@strapi/database/dist/transaction-context').transactionCtx;
-	} catch (error) {
-		console.warn('[strapi-plugin-io] Unable to access transaction context:', error.message);
-		return null;
+// Lazy-load transaction context to avoid bundling issues
+let transactionCtx = null;
+function getTransactionCtx() {
+	if (!transactionCtx) {
+		try {
+			transactionCtx = require('@strapi/database/dist/transaction-context').transactionCtx;
+		} catch (error) {
+			console.warn('[strapi-plugin-io] Unable to access transaction context:', error.message);
+			transactionCtx = { get: () => null, onCommit: () => {} }; // Fallback noop
+		}
 	}
-})();
+	return transactionCtx;
+}
 
 function scheduleAfterTransaction(callback, delay = 0) {
 	const runner = () => setTimeout(callback, delay);
-	if (transactionCtx?.get()) {
-		transactionCtx.onCommit(runner);
+	const ctx = getTransactionCtx();
+	if (ctx.get()) {
+		ctx.onCommit(runner);
 	} else {
 		runner();
 	}
