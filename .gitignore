@@ -1,6 +1,5 @@
 node_modules
-# dist is needed for npm publish - don't ignore it
-# dist
+dist
 *.log
 .DS_Store
 .env
