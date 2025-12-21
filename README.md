@@ -269,6 +269,63 @@ contentTypes: [
 
 > **Note**: The `populate` option only affects `create` and `update` events. Delete events always contain minimal data (id, documentId) since the entity no longer exists.
 
+### Sensitive Fields Protection
+
+The plugin automatically removes sensitive fields from all emitted data for security. This works in addition to Strapi's built-in `private: true` field filtering.
+
+#### Default Blocked Fields
+
+The following fields are **always removed** from emitted data:
+
+- `password`, `salt`, `hash`
+- `resetPasswordToken`, `confirmationToken`
+- `refreshToken`, `accessToken`, `token`
+- `secret`, `apiKey`, `api_key`
+- `privateKey`, `private_key`
+
+#### Custom Sensitive Fields
+
+Add your own sensitive fields to the block list:
+
+```javascript
+// config/plugins.js
+module.exports = {
+  io: {
+    enabled: true,
+    config: {
+      contentTypes: ['api::user.user'],
+      
+      // Additional fields to never emit
+      sensitiveFields: [
+        'creditCard',
+        'ssn',
+        'socialSecurityNumber',
+        'bankAccount',
+        'internalNotes'
+      ]
+    }
+  }
+};
+```
+
+#### How It Works
+
+1. **Schema-level filtering**: Strapi's `sanitize.contentAPI` removes `private: true` fields
+2. **Blocklist filtering**: Plugin removes all sensitive field names recursively
+3. **Applies to all emits**: Both `emit()` and `raw()` methods are protected
+
+```javascript
+// Even with populate, sensitive fields are stripped
+contentTypes: [
+  {
+    uid: 'api::user.user',
+    populate: '*'  // Relations included, but passwords etc. still removed
+  }
+]
+```
+
+> **Security Note**: Fields are matched case-insensitively and also partial matches work (e.g., `apiKey` blocks `myApiKey`, `user_api_key`, etc.)
+
 ### Environment Variables
 
 Recommended environment-based configuration:

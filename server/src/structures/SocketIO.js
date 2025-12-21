@@ -66,7 +66,17 @@ class SocketIO {
 		}
 	}
 
+	/**
+	 * Emit a raw event without schema-based sanitization.
+	 * Still removes sensitive fields for security.
+	 * @param {object} options - Emit options
+	 * @param {string} options.event - Event name
+	 * @param {any} options.data - Data to emit
+	 * @param {string[]} options.rooms - Optional rooms to emit to
+	 */
 	async raw({ event, data, rooms }) {
+		const sanitizeService = getService({ name: 'sanitize' });
+		
 		let emitter = this._socket;
 
 		// send to all specified rooms
@@ -76,7 +86,9 @@ class SocketIO {
 			});
 		}
 
-		emitter.emit(event, { data });
+		// Sanitize data to remove sensitive fields
+		const sanitizedData = sanitizeService.sanitizeRaw(data);
+		emitter.emit(event, { data: sanitizedData });
 	}
 
 	get server() {

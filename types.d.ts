@@ -30,6 +30,16 @@ export interface SocketIOConfig {
   socket?: {
     serverOptions?: any;
   };
+  /**
+   * Additional sensitive field names to exclude from emitted data.
+   * These are added to the default list which includes:
+   * password, resetPasswordToken, confirmationToken, refreshToken,
+   * accessToken, secret, apiKey, privateKey, token, salt, hash
+   * 
+   * @example
+   * sensitiveFields: ['creditCard', 'ssn', 'socialSecurityNumber']
+   */
+  sensitiveFields?: string[];
 }
 
 export interface SocketEvent {

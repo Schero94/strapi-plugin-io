@@ -37,11 +37,20 @@ const ContentType = z.object({
 
 const Socket = z.object({ serverOptions: z.unknown().optional() });
 
+/**
+ * Plugin configuration schema
+ */
 const plugin = z.object({
 	events: z.array(Event).optional(),
 	hooks: Hooks.optional(),
 	contentTypes: z.array(z.union([z.string(), ContentType])),
 	socket: Socket.optional(),
+	/**
+	 * Additional sensitive field names to exclude from emitted data.
+	 * These are added to the default list: password, resetPasswordToken,
+	 * confirmationToken, refreshToken, accessToken, secret, apiKey, etc.
+	 */
+	sensitiveFields: z.array(z.string()).optional(),
 });
 
 module.exports = {
