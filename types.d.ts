@@ -41,9 +41,42 @@ export interface SocketEvent {
   ) => void | Promise<void>;
 }
 
+/**
+ * Populate configuration for content type events.
+ * Supports multiple formats for flexibility.
+ */
+export type PopulateConfig = 
+  | '*'                              // Populate all relations (1 level deep)
+  | true                             // Alias for '*'
+  | string[]                         // Specific relations: ['author', 'category']
+  | Record<string, any>;             // Strapi populate syntax: { author: { fields: ['name'] } }
+
 export interface ContentTypeConfig {
+  /** Content type UID (e.g., 'api::article.article') */
   uid: string;
+  /** Actions to emit events for. Defaults to all: ['create', 'update', 'delete'] */
   actions?: Array<'create' | 'update' | 'delete'>;
+  /**
+   * Populate relations when emitting events.
+   * When configured, the plugin will refetch the entity with populated relations
+   * after create/update operations before emitting the event.
+   * 
+   * @example
+   * // Populate all relations
+   * populate: '*'
+   * 
+   * @example
+   * // Populate specific relations
+   * populate: ['author', 'category']
+   * 
+   * @example
+   * // Strapi populate syntax with field selection
+   * populate: { 
+   *   author: { fields: ['username', 'email'] },
+   *   category: true 
+   * }
+   */
+  populate?: PopulateConfig;
 }
 
 export interface EmitOptions {

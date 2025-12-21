@@ -165,15 +165,24 @@ module.exports = {
   io: {
     enabled: true,
     config: {
-      // Content types with specific actions
+      // Content types with specific actions and populate
       contentTypes: [
         {
           uid: 'api::article.article',
-          actions: ['create', 'update']  // Only these events
+          actions: ['create', 'update'],  // Only these events
+          populate: '*'                    // Include all relations
         },
         {
           uid: 'api::comment.comment',
-          actions: ['create', 'delete']
+          actions: ['create', 'delete'],
+          populate: ['author', 'article']  // Only specific relations
+        },
+        {
+          uid: 'api::order.order',
+          populate: {                      // Strapi populate syntax
+            customer: { fields: ['name', 'email'] },
+            items: { populate: ['product'] }
+          }
         }
       ],
       
@@ -217,7 +226,48 @@ module.exports = {
 };
 ```
 
-> **Note**: Relations are included globally via the admin panel settings (`Settings > Socket.IO > Events > Include Relations`), not per content type in the config file.
+### Populate Configuration
+
+Include relations in emitted events by adding the `populate` option to content types. When configured, the plugin refetches entities with populated relations after create/update operations.
+
+#### Populate Formats
+
+| Format | Example | Description |
+|--------|---------|-------------|
+| `'*'` or `true` | `populate: '*'` | Include all relations (1 level deep) |
+| String array | `populate: ['author', 'category']` | Only specific relations |
+| Object | `populate: { author: { fields: ['name'] } }` | Full Strapi populate syntax |
+
+#### Examples
+
+```javascript
+contentTypes: [
+  // All relations with wildcard
+  { uid: 'api::article.article', populate: '*' },
+  
+  // Specific relations only
+  { 
+    uid: 'api::comment.comment', 
+    populate: ['author', 'post'] 
+  },
+  
+  // Strapi populate syntax with field selection
+  { 
+    uid: 'api::order.order', 
+    populate: { 
+      customer: { fields: ['username', 'email'] },
+      items: { 
+        populate: { product: { fields: ['name', 'price'] } }
+      }
+    } 
+  },
+  
+  // No populate (only base fields)
+  { uid: 'api::log.log' }  // populate not set = no relations
+]
+```
+
+> **Note**: The `populate` option only affects `create` and `update` events. Delete events always contain minimal data (id, documentId) since the entity no longer exists.
 
 ### Environment Variables
 
