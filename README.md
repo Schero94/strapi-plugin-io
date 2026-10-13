@@ -38,7 +38,7 @@ To work with this fork, clone it, build it, and install its local package direct
 ~~~sh
 git clone https://github.com/Schero94/strapi-plugin-io.git
 cd strapi-plugin-io
-npm ci
+npm ci --legacy-peer-deps
 npm run build
 
 # From the Strapi application directory:
@@ -252,7 +252,7 @@ For the upstream package, version selection is managed by the upstream repositor
 
 ~~~sh
 # Install the checked-in dependencies
-npm ci
+npm ci --legacy-peer-deps
 
 # Build the plugin
 npm run build

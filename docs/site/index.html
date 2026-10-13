@@ -69,7 +69,7 @@
           <div class="callout"><strong>Upstream package:</strong> <code>npm install strapi-plugin-io</code> installs the public upstream package, not this fork.</div>
           <p>For local work on this fork, clone <a href="https://github.com/Schero94/strapi-plugin-io">the Schero94 repository</a>, install its dependencies, build it, then add its local package directory to your Strapi project.</p>
           <div class="code-card"><div class="code-label"><span>Build the fork locally</span><span>Node 22</span></div><pre><code>cd strapi-plugin-io
-npm ci
+npm ci --legacy-peer-deps
 npm run build
 
 # In the Strapi application, use the local package directory
