@@ -36,11 +36,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Verify plugin
-        run: npm run verify
-
       - name: Build plugin
         run: npm run build
+
+      - name: Verify plugin
+        run: npm run verify
 
       - name: Audit production dependencies
         run: npm audit --omit=dev
