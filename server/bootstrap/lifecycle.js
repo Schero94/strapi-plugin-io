@@ -14,7 +14,6 @@ function getTransactionCtx() {
 	return transactionCtx;
 }
 
-const { pluginId } = require('../utils/pluginId');
 
 /**
  * Run callback after the current transaction commits (if any).
@@ -76,7 +75,7 @@ async function bootstrapLifecycles({ strapi }) {
 
 	// Get all UIDs that have at least one action enabled
 	const enabledUids = Object.entries(allContentTypes)
-		.filter(([uid, actions]) => actions.create || actions.update || actions.delete)
+		.filter(([, actions]) => actions.create || actions.update || actions.delete)
 		.map(([uid]) => uid);
 
 	enabledUids.forEach((uid) => {

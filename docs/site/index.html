@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Setup, configure and secure the Schero94 Strapi IO fork for real-time Socket.IO events.">
+    <title>Strapi IO | Schero94 fork</title>
+    <link rel="canonical" href="https://schero94.github.io/strapi-plugin-io/">
+    <link rel="stylesheet" href="./site.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">IO</span><span>Strapi IO</span></a>
+        <nav class="top-links" aria-label="Project links">
+          <a href="https://github.com/Schero94/strapi-plugin-io">Fork source</a>
+          <a href="https://github.com/ComfortablyCoding/strapi-plugin-io">Upstream</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="hero-wrap" id="top">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <span class="eyebrow">Strapi 5 · Socket.IO</span>
+          <h1 id="page-title">Real-time events with access checks you can configure.</h1>
+          <p>This guide documents the Schero94 fork. The public npm package belongs to the upstream project and is not published from this fork.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Set up the plugin</a>
+            <a class="button" href="https://github.com/Schero94/strapi-plugin-io">View fork source</a>
+          </div>
+          <div class="badges" aria-label="Project facts">
+            <span class="badge">Strapi 5</span>
+            <span class="badge">Node 22</span>
+            <span class="badge">JWT handshake</span>
+            <span class="badge">Optional Redis adapter</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="layout">
+      <nav class="side-nav" aria-label="Documentation sections">
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="#configuration">Configuration</a>
+        <a href="#security">Security</a>
+        <a href="#api">API and events</a>
+        <a href="#releases">Releases</a>
+      </nav>
+
+      <main class="content" id="main-content" tabindex="-1">
+        <section class="section" id="features" aria-labelledby="features-title">
+          <h2 id="features-title">Features</h2>
+          <p class="section-lead">The plugin attaches a Socket.IO server to Strapi's HTTP server. Admin settings control connection policy, content-type events, rooms, namespaces, and monitoring.</p>
+          <div class="card-grid">
+            <article class="card"><div class="number" aria-hidden="true">01</div><h3>Content events</h3><p>Configured content types can emit <code>singularName:create</code>, <code>singularName:update</code>, and <code>singularName:delete</code> events after database lifecycle operations.</p></article>
+            <article class="card"><div class="number" aria-hidden="true">02</div><h3>JWT handshake</h3><p>Clients may send a users-permissions JWT in Socket.IO's <code>auth.token</code>. Invalid supplied tokens are rejected. Authentication can also be required in settings.</p></article>
+            <article class="card"><div class="number" aria-hidden="true">03</div><h3>Rooms and namespaces</h3><p>Configure role-based auto-join rooms and optional namespaces. Clients can request room joins only for rooms configured for their role.</p></article>
+            <article class="card"><div class="number" aria-hidden="true">04</div><h3>Monitoring</h3><p>The admin view reports connections, room counts, event totals, and a bounded in-memory event log. Monitoring snapshots omit socket IDs, addresses, tokens, and user identifiers.</p></article>
+          </div>
+          <div class="callout warning"><strong>Delete event scope:</strong> this fork currently emits delete events with <code>strapi.$io.raw()</code> on the root namespace. That path broadcasts to connected root-namespace clients instead of applying create/update role-room authorization. Do not enable delete events for sensitive content until that behavior has been reviewed or changed.</div>
+        </section>
+
+        <section class="section" id="install" aria-labelledby="install-title">
+          <h2 id="install-title">Install and connect</h2>
+          <p class="section-lead">This checkout is the Schero94 fork. Its package name matches the upstream package, but the fork does not publish to npm.</p>
+          <div class="callout"><strong>Upstream package:</strong> <code>npm install strapi-plugin-io</code> installs the public upstream package, not this fork.</div>
+          <p>For local work on this fork, clone <a href="https://github.com/Schero94/strapi-plugin-io">the Schero94 repository</a>, install its dependencies, build it, then add its local package directory to your Strapi project.</p>
+          <div class="code-card"><div class="code-label"><span>Build the fork locally</span><span>Node 22</span></div><pre><code>cd strapi-plugin-io
+npm ci
+npm run build
+
+# In the Strapi application, use the local package directory
+npm install --save file:../strapi-plugin-io</code></pre></div>
+          <p>Enable the plugin in <code>config/plugins.js</code> or <code>config/plugins.ts</code>.</p>
+          <div class="code-card"><div class="code-label"><span>config/plugins.js</span></div><pre><code>module.exports = ({ env }) =&gt; ({
+  io: {
+    enabled: true,
+  },
+});</code></pre></div>
+          <p>Open the Strapi admin and go to <strong>Settings → Socket.IO</strong> to configure content types and role permissions. Runtime CORS, connection, security, room, namespace, Redis, and monitoring settings are stored by the plugin. Legacy <code>contentTypes</code>, <code>events</code>, <code>hooks</code>, and <code>socket</code> config fields are accepted by the config schema but are not applied by the current bootstrap.</p>
+          <div class="code-card"><div class="code-label"><span>Connect from a JavaScript client</span></div><pre><code>import { io } from 'socket.io-client';
+
+const socket = io('https://cms.example.com', {
+  auth: { token: usersPermissionsJwt },
+});
+
+socket.on('article:create', (article) =&gt; {
+  console.log('Created article:', article);
+});</code></pre></div>
+        </section>
+
+        <section class="section" id="configuration" aria-labelledby="configuration-title">
+          <h2 id="configuration-title">Configuration</h2>
+          <p class="section-lead">Use the plugin settings screen to set runtime policies. These are the current defaults and server behavior.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Setting</th><th scope="col">Current default or behavior</th></tr></thead>
+              <tbody>
+                <tr><th scope="row"><code>cors</code></th><td>Origin allowlist defaults to <code>http://localhost:3000</code>. Wildcard and non-HTTP(S) origins are discarded. Allowed methods are restricted to known HTTP verbs.</td></tr>
+                <tr><th scope="row"><code>connection</code></th><td>Maximum 1,000 connections per server process; ping timeout 20 seconds, ping interval 25 seconds, and connection timeout 45 seconds.</td></tr>
+                <tr><th scope="row"><code>rolePermissions</code></th><td>Public and authenticated roles can connect by default. Configure each role's permitted content-type actions and room access deliberately.</td></tr>
+                <tr><th scope="row"><code>rooms.autoJoinByRole</code></th><td>Maps normalized role names to room names. Client room joins are limited to that role's configured list.</td></tr>
+                <tr><th scope="row"><code>entitySubscriptions</code></th><td>Enabled by default, with at most 100 subscriptions per socket and entity existence verification enabled. A role must have configured content-type actions.</td></tr>
+                <tr><th scope="row"><code>security</code></th><td>Authentication and event rate limiting are off by default. IP allowlists and blocklists are empty.</td></tr>
+                <tr><th scope="row"><code>redis</code></th><td>Disabled by default. When enabled, the adapter uses the configured Redis URL or <code>redis://localhost:6379</code>.</td></tr>
+                <tr><th scope="row"><code>monitoring</code></th><td>Connection logging is on, event logging is off, and the event log holds up to 100 entries by default.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Scale across Strapi instances</h3>
+          <p>Enable Redis in settings and set a private Redis URL reachable by every Strapi instance. Each instance creates publisher and subscriber clients and installs the Socket.IO Redis adapter. If adapter initialization fails, the plugin logs an error and continues without it. Configure load-balancer session affinity when Socket.IO polling is enabled.</p>
+          <div class="code-card"><div class="code-label"><span>Settings shape</span></div><pre><code>{
+  "redis": {
+    "enabled": true,
+    "url": "redis://redis.internal:6379"
+  },
+  "security": {
+    "requireAuthentication": true,
+    "rateLimiting": {
+      "enabled": true,
+      "maxEventsPerSecond": 10
+    }
+  }
+}</code></pre></div>
+        </section>
+
+        <section class="section" id="security" aria-labelledby="security-title">
+          <h2 id="security-title">Security</h2>
+          <p class="section-lead">CORS controls browser origins. It does not authenticate a socket or authorize access to content.</p>
+          <div class="card-grid">
+            <article class="card"><h3>Authentication</h3><p>Send a users-permissions JWT as <code>auth.token</code>, not as a query parameter. Set <code>security.requireAuthentication</code> when anonymous connections are not appropriate. Invalid supplied tokens are rejected instead of falling back to public access.</p></article>
+            <article class="card"><h3>Room access</h3><p>Use role-specific room allowlists. Room names are limited to 128 alphanumeric, underscore, or hyphen characters. Private messages require authenticated sockets with the same role and are limited to 2,000 characters.</p></article>
+            <article class="card"><h3>Network and rate controls</h3><p>Set exact HTTPS origins, enable IP allowlists or blocklists where useful, and enable per-socket event rate limiting. Keep Redis private and protect it according to your infrastructure.</p></article>
+            <article class="card"><h3>Monitoring data</h3><p>Monitoring output uses aggregate room and connection data. Event logs retain only an allowlist of fields and stay in process memory, not durable storage.</p></article>
+          </div>
+          <div class="callout warning">Review the delete-event behavior above before enabling delete notifications for protected or personal data. The current path broadcasts a minimal identifier payload to root-namespace clients.</div>
+        </section>
+
+        <section class="section" id="api" aria-labelledby="api-title">
+          <h2 id="api-title">API and events</h2>
+          <p class="section-lead">The Socket.IO server is available as <code>strapi.$io</code> after plugin bootstrap.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Call</th><th scope="col">Purpose</th></tr></thead>
+              <tbody>
+                <tr><th scope="row"><code>strapi.$io.joinRoom(socketId, room)</code></th><td>Join a connected socket to a room from server-side code.</td></tr>
+                <tr><th scope="row"><code>strapi.$io.leaveRoom(socketId, room)</code></th><td>Remove a connected socket from a room.</td></tr>
+                <tr><th scope="row"><code>strapi.$io.getSocketsInRoom(room)</code></th><td>Return connected socket IDs and attached user objects for the room.</td></tr>
+                <tr><th scope="row"><code>strapi.$io.sendPrivateMessage(socketId, event, data)</code></th><td>Emit an event to a socket ID from server-side code.</td></tr>
+                <tr><th scope="row"><code>strapi.$io.emitToNamespace(name, event, data)</code></th><td>Emit to a configured namespace. The root namespace is named <code>main</code> in the helper map.</td></tr>
+                <tr><th scope="row"><code>strapi.$io.emitToEntity(uid, id, event, data)</code></th><td>Emit to the entity room <code>uid:id</code>. Server-side callers must enforce their own authorization.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Client room and entity events</h3>
+          <div class="code-card"><div class="code-label"><span>Room join and entity subscription</span></div><pre><code>socket.emit('join-room', 'members', (result) =&gt; {
+  if (!result.success) console.error(result.error);
+});
+
+socket.emit('subscribe-entity', {
+  uid: 'api::article.article',
+  id: 'article-document-id',
+}, (result) =&gt; {
+  if (result.success) console.log('Subscribed:', result.room);
+});
+
+socket.on('article:update', (article) =&gt; {
+  console.log('Article update:', article);
+});</code></pre></div>
+          <p>Entity subscription requests validate the UID and ID, check that the content type exists, check the role's configured content-type actions, and verify the entity by default. The subscription limit is capped at 500 even if a larger value is configured.</p>
+          <p>The config schema still accepts <code>events</code> and <code>hooks</code> fields for compatibility, but the current bootstrap does not register those handlers. Use server-side Socket.IO listeners in your application when you need custom event handling.</p>
+        </section>
+
+        <section class="section" id="releases" aria-labelledby="releases-title">
+          <h2 id="releases-title">Releases and package ownership</h2>
+          <p class="section-lead">This repository is the Schero94 fork. GitHub releases are created here by semantic-release. They update the package version and changelog but do not publish to npm.</p>
+          <p>The public package at <a href="https://www.npmjs.com/package/strapi-plugin-io">npmjs.com/package/strapi-plugin-io</a> is upstream-owned. Installing that package does not install this fork.</p>
+          <div class="link-list">
+            <a href="https://github.com/Schero94/strapi-plugin-io">Fork repository</a>
+            <a href="https://github.com/Schero94/strapi-plugin-io/releases">Fork releases</a>
+            <a href="https://github.com/ComfortablyCoding/strapi-plugin-io">Upstream repository</a>
+            <a href="https://www.npmjs.com/package/strapi-plugin-io">Upstream npm package</a>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="footer">
+      <p>Documentation for the Schero94 fork of Strapi IO.</p>
+      <p><a href="https://github.com/Schero94/strapi-plugin-io">Fork source</a> · Public npm package: upstream only.</p>
+    </footer>
+  </body>
+</html>

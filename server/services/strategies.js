@@ -6,6 +6,12 @@ const { getService } = require('../utils/getService');
 const { API_TOKEN_TYPE } = require('../utils/constants');
 const { UnauthorizedError, ForbiddenError } = require('@strapi/utils').errors;
 
+function isReadScope(scope) {
+	if (typeof scope !== 'string') return false;
+	const action = scope.slice(scope.lastIndexOf('.') + 1);
+	return action === 'find' || action === 'findOne';
+}
+
 module.exports = ({ strapi }) => {
 	const apiTokenService = getService({ type: 'admin', plugin: 'api-token' });
 	const jwtService = getService({ name: 'jwt', plugin: 'users-permissions' });

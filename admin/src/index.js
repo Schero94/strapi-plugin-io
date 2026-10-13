@@ -62,7 +62,7 @@ export default {
 		}
 	},
 
-	bootstrap(app) {
+	bootstrap() {
 		console.log(`[${PLUGIN_ID}] Bootstrapping plugin...`);
 	},
 

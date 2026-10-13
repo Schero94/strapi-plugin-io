@@ -273,9 +273,6 @@ const ResponsiveField = styled(Field.Root)`
   }
 `;
 
-// Available actions for each content type
-const AVAILABLE_ACTIONS = ['create', 'update', 'delete'];
-
 const SettingsPage = () => {
   const { get, put } = useFetchClient();
   const { toggleNotification } = useNotification();
@@ -353,7 +350,10 @@ const SettingsPage = () => {
     // Validate CORS Origins
     settingsToValidate.cors?.origins?.forEach((origin) => {
       try {
-        new URL(origin);
+        const parsed = new URL(origin);
+        if (!['http:', 'https:'].includes(parsed.protocol) || parsed.origin !== origin) {
+          throw new Error('Origin must not include a path or wildcard');
+        }
       } catch {
         errors.push(t('validation.invalidOrigin', `Invalid origin: ${origin}`));
       }
@@ -545,12 +545,24 @@ const SettingsPage = () => {
   const [newOrigin, setNewOrigin] = useState('');
   const [newNamespace, setNewNamespace] = useState('');
   const addOrigin = () => {
-    if (newOrigin && !settings.cors?.origins?.includes(newOrigin)) {
+    const normalizedOrigin = newOrigin.trim();
+    let isAllowedOrigin;
+    try {
+      const parsed = new URL(normalizedOrigin);
+      isAllowedOrigin = ['http:', 'https:'].includes(parsed.protocol) && parsed.origin === normalizedOrigin;
+    } catch {
+      isAllowedOrigin = false;
+    }
+    if (normalizedOrigin && !isAllowedOrigin) {
+      toggleNotification({ type: 'warning', message: t('validation.invalidOrigin', 'Enter a valid HTTP or HTTPS origin') });
+      return;
+    }
+    if (normalizedOrigin && !settings.cors?.origins?.includes(normalizedOrigin)) {
       updateSettings((prev) => ({
         ...prev,
         cors: {
           ...prev.cors,
-          origins: [...(prev.cors?.origins || []), newOrigin],
+          origins: [...(prev.cors?.origins || []), normalizedOrigin],
         },
       }));
       setNewOrigin('');
@@ -763,23 +775,33 @@ const SettingsPage = () => {
           <Grid.Root gap={4}>
             <Grid.Item col={12}>
               <ResponsiveField>
-                <Field.Label>{t('cors.origins', 'Allowed Origins')}</Field.Label>
+                <Field.Label htmlFor="io-cors-origin">{t('cors.origins', 'Allowed Origins')}</Field.Label>
                 <Flex direction={{ base: 'column', tablet: 'row' }} gap={2} paddingBottom={2}>
                   <InputWrapper style={{ flex: 1, width: '100%' }}>
                     <TextInput
+                      id="io-cors-origin"
                       placeholder="http://localhost:3000"
                       value={newOrigin}
                       onChange={(e) => setNewOrigin(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addOrigin()}
+                      onKeyDown={(e) => e.key === 'Enter' && addOrigin()}
                     />
                   </InputWrapper>
                   <Button onClick={addOrigin} size="L" style={{ width: '100%', maxWidth: '200px', minHeight: '44px' }}>{t('cors.add', 'Add')}</Button>
                 </Flex>
-                <Flex gap={2} wrap="wrap" paddingTop={2}>
+                <Flex gap={2} wrap="wrap" paddingTop={2} alignItems="center">
                   {settings.cors?.origins?.map((origin) => (
-                    <Badge key={origin} onClick={() => removeOrigin(origin)} style={{ cursor: 'pointer', fontSize: '13px', padding: '6px 12px' }}>
-                      {origin} ✕
-                    </Badge>
+                    <Flex key={origin} gap={1} alignItems="center" maxWidth="100%" wrap="wrap" background="neutral100" hasRadius paddingLeft={2} paddingRight={1} paddingTop={1} paddingBottom={1}>
+                      <Typography variant="pi" style={{ overflowWrap: 'anywhere' }}>{origin}</Typography>
+                      <Button
+                        type="button"
+                        variant="tertiary"
+                        size="S"
+                        aria-label={`${t('cors.remove', 'Remove origin')} ${origin}`}
+                        onClick={() => removeOrigin(origin)}
+                      >
+                        {t('cors.removeShort', 'Remove')}
+                      </Button>
+                    </Flex>
                   ))}
                 </Flex>
                 <Field.Hint>
@@ -1088,8 +1110,8 @@ const SettingsPage = () => {
               {availableRoles.map((role) => {
                 const rolePerms = settings.rolePermissions?.[role.type] || {};
                 const canConnect = rolePerms.canConnect ?? true;
-                const enabledContentTypes = Object.entries(rolePerms.contentTypes || {}).filter(
-                  ([uid, actions]) => actions.create || actions.update || actions.delete
+					const enabledContentTypes = Object.entries(rolePerms.contentTypes || {}).filter(
+						([, actions]) => actions.create || actions.update || actions.delete
                 ).length;
 
                 return (
@@ -1292,9 +1314,6 @@ const SettingsPage = () => {
                                 const hasAnyPermission = rolePerms.contentTypes?.[ct.uid]?.create || 
                                                         rolePerms.contentTypes?.[ct.uid]?.update || 
                                                         rolePerms.contentTypes?.[ct.uid]?.delete;
-                                const allowEntitySubs = settings.entitySubscriptions?.allowedContentTypes?.includes(ct.uid) || 
-                                                       settings.entitySubscriptions?.allowedContentTypes?.length === 0;
-                                
                                 return (
                                   <Box
                                     key={ct.uid}
@@ -1699,12 +1718,12 @@ const SettingsPage = () => {
                 padding={4}
                 background={settings.monitoring?.enableConnectionLogging ? 'primary100' : 'neutral0'}
                 hasRadius
-                style={{ cursor: 'pointer', border: `1px solid ${settings.monitoring?.enableConnectionLogging ? '#4945ff' : '#dcdce4'}` }}
-                onClick={() => updateMonitoring('enableConnectionLogging', !settings.monitoring?.enableConnectionLogging)}
+                style={{ border: `1px solid ${settings.monitoring?.enableConnectionLogging ? '#4945ff' : '#dcdce4'}` }}
               >
                 <Flex gap={3} alignItems="center">
                   <Checkbox
                     checked={settings.monitoring?.enableConnectionLogging || false}
+                    aria-label={t('monitoring.connectionLogging', 'Connection Logging')}
                     onCheckedChange={(checked) => updateMonitoring('enableConnectionLogging', checked)}
                   />
                   <Flex direction="column" alignItems="flex-start" gap={1}>
@@ -1723,12 +1742,12 @@ const SettingsPage = () => {
                 padding={4}
                 background={settings.monitoring?.enableEventLogging ? 'primary100' : 'neutral0'}
                 hasRadius
-                style={{ cursor: 'pointer', border: `1px solid ${settings.monitoring?.enableEventLogging ? '#4945ff' : '#dcdce4'}` }}
-                onClick={() => updateMonitoring('enableEventLogging', !settings.monitoring?.enableEventLogging)}
+                style={{ border: `1px solid ${settings.monitoring?.enableEventLogging ? '#4945ff' : '#dcdce4'}` }}
               >
                 <Flex gap={3} alignItems="center">
                   <Checkbox
                     checked={settings.monitoring?.enableEventLogging || false}
+                    aria-label={t('monitoring.eventLogging', 'Event Logging')}
                     onCheckedChange={(checked) => updateMonitoring('enableEventLogging', checked)}
                   />
                   <Flex direction="column" alignItems="flex-start" gap={1}>

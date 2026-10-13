@@ -24,8 +24,6 @@ module.exports = ({ strapi }) => ({
 		const settingsService = strapi.plugin(pluginId).service('settings');
 		const { body } = ctx.request;
 
-		// Get old settings to compare
-		const oldSettings = await settingsService.getSettings();
 		const updatedSettings = await settingsService.setSettings(body);
 
 		// Update stored settings reference for lifecycle hooks
@@ -97,13 +95,16 @@ module.exports = ({ strapi }) => ({
 	 */
 	async sendTestEvent(ctx) {
 		const monitoringService = strapi.plugin(pluginId).service('monitoring');
-		const { eventName, data } = ctx.request.body;
+		const body = ctx.request.body;
+		if (!body || typeof body !== 'object' || Array.isArray(body)) {
+			return ctx.badRequest('Invalid test event request');
+		}
 
 		try {
-			const result = monitoringService.sendTestEvent(eventName || 'test', data || {});
+			const result = monitoringService.sendTestEvent(body.eventName || 'test', body.data ?? {});
 			ctx.body = { data: result };
 		} catch (error) {
-			ctx.throw(500, error.message);
+			return ctx.badRequest(error.message);
 		}
 	},
 

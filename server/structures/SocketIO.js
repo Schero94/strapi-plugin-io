@@ -3,7 +3,6 @@
 const { Server } = require('socket.io');
 const { handshake } = require('../middleware');
 const { getService } = require('../utils/getService');
-const { pluginId } = require('../utils/pluginId');
 const { API_TOKEN_TYPE } = require('../utils/constants');
 
 class SocketIO {
@@ -14,7 +13,6 @@ class SocketIO {
 		this._socket.use(handshake);
 	}
 
-	// eslint-disable-next-line no-unused-vars
 	async emit({ event, schema, data: rawData }) {
 		const sanitizeService = getService({ name: 'sanitize' });
 		const strategyService = getService({ name: 'strategy' });
@@ -27,10 +25,6 @@ class SocketIO {
 
 		const eventName = `${schema.singularName}:${event}`;
 		
-		// Extract entity ID for entity-specific room
-		const entityId = rawData.id || rawData.documentId;
-		const entityRoomName = entityId ? `${schema.uid}:${entityId}` : null;
-
 		for (const strategyType in strategyService) {
 			if (Object.hasOwnProperty.call(strategyService, strategyType)) {
 				const strategy = strategyService[strategyType];
@@ -65,11 +59,6 @@ class SocketIO {
 						
 						// Emit to role-based room (existing behavior)
 						this._socket.to(roomName.replace(' ', '-')).emit(eventName, { ...data });
-						
-						// Also emit to entity-specific room if ID exists
-						if (entityRoomName) {
-							this._socket.to(entityRoomName).emit(eventName, { ...data });
-						}
 					}
 				}
 			}

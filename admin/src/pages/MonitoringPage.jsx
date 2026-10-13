@@ -517,7 +517,7 @@ const MonitoringPage = () => {
       if (s.data?.data) setStats(s.data.data);
       if (l.data?.data) setEventLog(l.data.data);
       setIsLoading(false);
-    } catch (e) {
+    } catch {
       setIsLoading(false);
     }
   };
@@ -584,12 +584,12 @@ const MonitoringPage = () => {
             <Subtitle>{t('monitoring.description', 'Real-time connection and event statistics')}</Subtitle>
           </Box>
           <Flex gap={2}>
-            <ActionButton className="secondary" onClick={fetchStats}>
+            <ActionButton className="secondary" aria-label={t('monitoring.refresh', 'Refresh')} onClick={fetchStats}>
               <ArrowPathIcon />
               <span style={{ display: 'none' }}>Refresh</span>
               <span style={{ display: 'inline' }}>↻</span>
             </ActionButton>
-            <ActionButton className="danger" onClick={handleResetStats}>
+            <ActionButton className="danger" aria-label={t('monitoring.resetStats', 'Reset statistics')} onClick={handleResetStats}>
               <TrashIcon />
               <span style={{ display: 'none' }}>Reset</span>
               <span style={{ display: 'inline' }}>✕</span>
@@ -688,8 +688,8 @@ const MonitoringPage = () => {
             </Flex>
             {stats?.connections?.sockets?.length > 0 ? (
               <Box style={{ maxHeight: '220px', overflowY: 'auto' }}>
-                {stats.connections.sockets.map(s => (
-                  <ClientItem key={s.id}>
+                {stats.connections.sockets.map((s, index) => (
+                  <ClientItem key={`${s.authenticated}-${index}`}>
                     <Flex 
                       direction={{ base: 'column', tablet: 'row' }}
                       justifyContent="space-between" 
@@ -698,24 +698,13 @@ const MonitoringPage = () => {
                     >
                       <Box style={{ flex: 1, minWidth: 0 }}>
                         <Typography variant="omega" fontWeight="bold">
-                          {s.user ? s.user.username : 'Anonymous'}
+                          {s.authenticated ? 'Authenticated client' : 'Anonymous client'}
                         </Typography>
                         <Flex gap={1} wrap="wrap">
                           <Typography variant="pi" textColor="neutral600" style={{ fontSize: '12px' }}>
-                            {s.user?.email || s.handshake.address}
-                          </Typography>
-                          <Typography variant="pi" textColor="neutral400">•</Typography>
-                          <Typography variant="pi" textColor="neutral500" style={{ fontSize: '12px' }}>
-                            {s.user?.role || 'public'}
+                            {s.roomCount} {t('monitoring.roomsLowercase', 'rooms')}
                           </Typography>
                         </Flex>
-                        <Typography 
-                          variant="pi" 
-                          textColor="neutral300" 
-                          style={{ fontFamily: 'monospace', fontSize: '10px', wordBreak: 'break-all' }}
-                        >
-                          {s.id}
-                        </Typography>
                       </Box>
                       <Badge active={s.connected}>{s.connected ? 'Online' : 'Offline'}</Badge>
                     </Flex>

@@ -2,6 +2,12 @@
 
 const { SocketIO } = require('../structures');
 const { pluginId } = require('../utils/pluginId');
+const {
+	buildCorsOptions,
+	createHandshakeMiddleware,
+	registerRoomAccessHandlers,
+	validateEntitySubscriptionInput,
+} = require('../utils/socket-security');
 
 async function bootstrapIO({ strapi }) {
 	const settingsService = strapi.plugin(pluginId).service('settings');
@@ -9,11 +15,7 @@ async function bootstrapIO({ strapi }) {
 	const monitoringService = strapi.plugin(pluginId).service('monitoring');
 
 	const serverOptions = {
-		cors: {
-			origin: settings.cors?.origins || ['http://localhost:3000'],
-			methods: settings.cors?.methods || ['GET', 'POST'],
-			credentials: settings.cors?.credentials ?? true,
-		},
+		cors: buildCorsOptions(settings),
 		pingTimeout: settings.connection?.pingTimeout || 20000,
 		pingInterval: settings.connection?.pingInterval || 25000,
 		connectTimeout: settings.connection?.connectionTimeout || 45000,
@@ -36,9 +38,9 @@ async function bootstrapIO({ strapi }) {
 			await Promise.all([pubClient.connect(), subClient.connect()]);
 			
 			serverOptions.adapter = createAdapter(pubClient, subClient);
-			strapi.log.info(`socket.io: Redis adapter enabled (${settings.redis.url})`);
-		} catch (err) {
-			strapi.log.error(`socket.io: Redis adapter failed: ${err.message}`);
+			strapi.log.info('socket.io: Redis adapter enabled');
+		} catch {
+			strapi.log.error('socket.io: Redis adapter failed');
 		}
 	}
 
@@ -67,7 +69,7 @@ async function bootstrapIO({ strapi }) {
 						strapi.log.warn(`socket.io: Authentication required for namespace /${name}, connection denied`);
 						return next(new Error(`Authentication required for namespace /${name}`));
 					}
-					strapi.log.debug(`socket.io: Authenticated access to namespace /${name} by ${socket.user.username}`);
+					strapi.log.debug(`socket.io: Authenticated access to namespace /${name}`);
 					next();
 				});
 			}
@@ -78,99 +80,8 @@ async function bootstrapIO({ strapi }) {
 
 	strapi.$io.namespaces = namespaces;
 
-	// Connection Middleware
-	io.server.use(async (socket, next) => {
-		const clientIp = socket.handshake.address;
-
-		if (settings.security?.ipWhitelist?.length > 0) {
-			if (!settings.security.ipWhitelist.includes(clientIp)) {
-				return next(new Error('IP not whitelisted'));
-			}
-		}
-
-		if (settings.security?.ipBlacklist?.includes(clientIp)) {
-			return next(new Error('IP blacklisted'));
-		}
-
-		const currentConnections = io.server.sockets.sockets.size;
-		if (currentConnections >= (settings.connection?.maxConnections || 1000)) {
-			return next(new Error('Max connections reached'));
-		}
-
-		const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-		if (token) {
-			try {
-				const decoded = await strapi.plugin('users-permissions').service('jwt').verify(token);
-				strapi.log.info(`socket.io: JWT decoded - user id: ${decoded.id}`);
-				
-				if (decoded.id) {
-					// Use Document Service API (Strapi v5)
-					const users = await strapi.documents('plugin::users-permissions.user').findMany({
-						filters: { id: decoded.id },
-						populate: { role: true },
-						limit: 1,
-					});
-					const user = users.length > 0 ? users[0] : null;
-					
-					if (user) {
-						socket.user = {
-							id: user.id,
-							username: user.username,
-							email: user.email,
-							role: user.role?.name || 'authenticated',
-						};
-						strapi.log.info(`socket.io: User authenticated - ${user.username} (${user.email})`);
-					} else {
-						strapi.log.warn(`socket.io: User not found for id: ${decoded.id}`);
-					}
-				}
-			} catch (err) {
-				strapi.log.warn(`socket.io: JWT verification failed: ${err.message}`);
-			}
-		} else {
-			strapi.log.debug(`socket.io: No token provided, connecting as public`);
-		}
-
-		if (settings.security?.requireAuthentication && !socket.user) {
-			return next(new Error('Authentication required'));
-		}
-
-		// Check canConnect permission for user role
-		const userRole = socket.user?.role?.toLowerCase() || 'public';
-		const rolePermissions = settings.rolePermissions || {};
-		
-		// Find matching role permission (check multiple possible formats)
-		let rolePerms = rolePermissions[userRole];
-		if (!rolePerms) {
-			// Try 'authenticated' as fallback for logged-in users
-			if (socket.user && rolePermissions['authenticated']) {
-				rolePerms = rolePermissions['authenticated'];
-			} else if (!socket.user && rolePermissions['public']) {
-				rolePerms = rolePermissions['public'];
-			}
-		}
-
-		// Check if role is allowed to connect
-		if (rolePerms && rolePerms.canConnect === false) {
-			strapi.log.warn(`socket.io: Connection denied for role '${userRole}' (canConnect=false)`);
-			return next(new Error(`Role '${userRole}' is not allowed to connect to Socket.IO`));
-		}
-
-		// If no explicit permission found, use default behavior
-		// Default: allow connection (backward compatibility)
-		const canConnect = rolePerms ? (rolePerms.canConnect !== false) : true;
-		if (!canConnect) {
-			strapi.log.warn(`socket.io: Connection denied for role '${userRole}'`);
-			return next(new Error('Connection not allowed for this role'));
-		}
-
-		// Store role permissions on socket for later use
-		socket.rolePermissions = rolePerms;
-		socket.userRole = userRole;
-
-		strapi.log.debug(`socket.io: Connection allowed for role '${userRole}' (canConnect=${canConnect})`);
-		next();
-	});
+	// A supplied but invalid token must never fall back to public access.
+	io.server.use(createHandshakeMiddleware({ settings, io: io.server, strapi }));
 
 	// Custom Middleware
 	if (settings.middleware?.enabled && Array.isArray(settings.middleware.handlers)) {
@@ -183,76 +94,25 @@ async function bootstrapIO({ strapi }) {
 
 	// Connection Handler
 	io.server.on('connection', (socket) => {
-		const clientIp = socket.handshake.address || 'unknown';
-		const username = socket.user?.username || 'anonymous';
+		const username = socket.user ? 'authenticated' : 'anonymous';
 		
 		if (settings.monitoring?.enableConnectionLogging) {
-			strapi.log.info(`socket.io: Client connected (id: ${socket.id}, user: ${username}, ip: ${clientIp})`);
+			strapi.log.info(`socket.io: Client connected (user: ${username})`);
 			monitoringService.logEvent('connection', { 
-				socketId: socket.id, 
-				ip: clientIp,
-				user: socket.user || null,
+				authenticated: Boolean(socket.user),
 			});
 		}
 
-		if (settings.rooms?.autoJoinByRole) {
-			const userRole = socket.user?.role || 'public';
-			const rooms = settings.rooms.autoJoinByRole[userRole] || [];
-			rooms.forEach((room) => {
-				socket.join(room);
-				strapi.log.debug(`socket.io: Socket ${socket.id} joined room: ${room}`);
-			});
-		}
-
-		// Room Management API (with security)
-		socket.on('join-room', (roomName, callback) => {
-			// Validate room name
-			if (typeof roomName !== 'string' || roomName.length === 0) {
-				if (callback) callback({ success: false, error: 'Invalid room name' });
-				return;
-			}
-
-			// Sanitize room name (alphanumeric, dash, underscore only)
-			const sanitizedRoom = roomName.replace(/[^a-zA-Z0-9-_]/g, '');
-			if (sanitizedRoom !== roomName) {
-				strapi.log.warn(`socket.io: Invalid room name attempted: ${roomName}`);
-				if (callback) callback({ success: false, error: 'Room name contains invalid characters' });
-				return;
-			}
-
-			// Check if private rooms are enabled
-			if (settings.rooms?.enablePrivateRooms === false) {
-				// Only allow predefined rooms from autoJoinByRole
-				const allowedRooms = Object.values(settings.rooms?.autoJoinByRole || {}).flat();
-				if (!allowedRooms.includes(roomName)) {
-					strapi.log.warn(`socket.io: Private rooms disabled, join denied for: ${roomName}`);
-					if (callback) callback({ success: false, error: 'Private rooms are disabled' });
-					return;
-				}
-			}
-
-			socket.join(roomName);
-			strapi.log.debug(`socket.io: Socket ${socket.id} joined room: ${roomName}`);
-			if (callback) callback({ success: true, room: roomName });
-		});
-
-		socket.on('leave-room', (roomName, callback) => {
-			if (typeof roomName === 'string' && roomName.length > 0) {
-				socket.leave(roomName);
-				strapi.log.debug(`socket.io: Socket ${socket.id} left room: ${roomName}`);
-				if (callback) callback({ success: true, room: roomName });
-			} else {
-				if (callback) callback({ success: false, error: 'Invalid room name' });
-			}
-		});
-
-		socket.on('get-rooms', (callback) => {
-			const rooms = Array.from(socket.rooms).filter((r) => r !== socket.id);
-			if (callback) callback({ success: true, rooms });
-		});
+		registerRoomAccessHandlers(socket, { settings, io: io.server });
 
 		// Entity Subscription (NEW - for entity-specific events)
-		socket.on('subscribe-entity', async ({ uid, id }, callback) => {
+		socket.on('subscribe-entity', async (payload, callback) => {
+			const identity = validateEntitySubscriptionInput(payload);
+			if (!identity) {
+				if (callback) callback({ success: false, error: 'Invalid entity subscription' });
+				return;
+			}
+			const { uid, id } = identity;
 			// Check if entity subscriptions are enabled
 			if (settings.entitySubscriptions?.enabled === false) {
 				if (callback) callback({ success: false, error: 'Entity subscriptions are disabled' });
@@ -287,7 +147,8 @@ async function bootstrapIO({ strapi }) {
 
 			// Check max subscriptions per socket
 			const currentSubs = Array.from(socket.rooms).filter(r => r !== socket.id && r.includes(':')).length;
-			const maxSubs = settings.entitySubscriptions?.maxSubscriptionsPerSocket || 100;
+			const configuredMaxSubs = settings.entitySubscriptions?.maxSubscriptionsPerSocket;
+			const maxSubs = Number.isInteger(configuredMaxSubs) ? Math.max(0, Math.min(configuredMaxSubs, 500)) : 100;
 			if (currentSubs >= maxSubs) {
 				if (callback) callback({ success: false, error: `Maximum subscriptions (${maxSubs}) reached` });
 				return;
@@ -332,8 +193,8 @@ async function bootstrapIO({ strapi }) {
 						if (callback) callback({ success: false, error: 'Entity not found' });
 						return;
 					}
-				} catch (err) {
-					strapi.log.warn(`socket.io: Entity verification failed for ${uid}:${id} - ${err.message}`);
+				} catch {
+					strapi.log.warn('socket.io: Entity verification failed');
 					if (callback) callback({ success: false, error: 'Entity verification failed' });
 					return;
 				}
@@ -353,11 +214,17 @@ async function bootstrapIO({ strapi }) {
 				});
 			}
 			
-			strapi.log.debug(`socket.io: Socket ${socket.id} subscribed to entity: ${entityRoomName}`);
+			strapi.log.debug('socket.io: Entity subscription accepted');
 			if (callback) callback({ success: true, room: entityRoomName, uid, id });
 		});
 
-		socket.on('unsubscribe-entity', ({ uid, id }, callback) => {
+		socket.on('unsubscribe-entity', (payload, callback) => {
+			const identity = validateEntitySubscriptionInput(payload);
+			if (!identity) {
+				if (callback) callback({ success: false, error: 'Invalid entity subscription' });
+				return;
+			}
+			const { uid, id } = identity;
 			// Check if entity subscriptions are enabled
 			if (settings.entitySubscriptions?.enabled === false) {
 				if (callback) callback({ success: false, error: 'Entity subscriptions are disabled' });
@@ -383,7 +250,7 @@ async function bootstrapIO({ strapi }) {
 				});
 			}
 			
-			strapi.log.debug(`socket.io: Socket ${socket.id} unsubscribed from entity: ${entityRoomName}`);
+			strapi.log.debug('socket.io: Entity subscription removed');
 			if (callback) callback({ success: true, room: entityRoomName, uid, id });
 		});
 
@@ -399,66 +266,23 @@ async function bootstrapIO({ strapi }) {
 			if (callback) callback({ success: true, subscriptions: rooms });
 		});
 
-		// Private Messages (with security)
-		socket.on('private-message', ({ to, message }, callback) => {
-			// Check if private rooms are enabled
-			if (settings.rooms?.enablePrivateRooms === false) {
-				strapi.log.warn(`socket.io: Private messages disabled for socket ${socket.id}`);
-				if (callback) callback({ success: false, error: 'Private messages are disabled' });
-				return;
-			}
-
-			// Validate parameters
-			if (!to || !message) {
-				if (callback) callback({ success: false, error: 'Invalid parameters' });
-				return;
-			}
-
-			// Validate message content
-			if (typeof message !== 'string' || message.length === 0 || message.length > 10000) {
-				if (callback) callback({ success: false, error: 'Invalid message length' });
-				return;
-			}
-
-			// Check if target socket exists
-			const targetSocket = io.server.sockets.sockets.get(to);
-			if (!targetSocket) {
-				strapi.log.warn(`socket.io: Private message target not found: ${to}`);
-				if (callback) callback({ success: false, error: 'Target socket not found' });
-				return;
-			}
-
-			// Send message
-			io.server.to(to).emit('private-message', {
-				from: socket.id,
-				fromUser: socket.user?.username || 'anonymous',
-				message,
-				timestamp: Date.now(),
-			});
-
-			strapi.log.debug(`socket.io: Private message from ${socket.id} to ${to}`);
-			if (callback) callback({ success: true });
-		});
-
 		// Disconnect Handler
 		socket.on('disconnect', (reason) => {
 			if (settings.monitoring?.enableConnectionLogging) {
-				strapi.log.info(`socket.io: Client disconnected (id: ${socket.id}, user: ${username}, reason: ${reason})`);
-				monitoringService.logEvent('disconnect', { 
-					socketId: socket.id, 
-					reason,
-					user: socket.user || null,
+				strapi.log.info(`socket.io: Client disconnected (user: ${username})`);
+				monitoringService.logEvent('disconnect', {
+					reason: ['client namespace disconnect', 'server namespace disconnect', 'ping timeout', 'transport close'].includes(reason) ? reason : 'unknown',
+					authenticated: Boolean(socket.user),
 				});
 			}
 		});
 
 		// Error Handler
-		socket.on('error', (error) => {
-			strapi.log.error(`socket.io: Socket error (id: ${socket.id}): ${error.message}`);
+		socket.on('error', () => {
+			strapi.log.error('socket.io: Socket error');
 			monitoringService.logEvent('error', { 
-				socketId: socket.id, 
-				error: error.message,
-				user: socket.user || null,
+				error: 'socket-error',
+				authenticated: Boolean(socket.user),
 			});
 		});
 	});
@@ -540,7 +364,7 @@ async function bootstrapIO({ strapi }) {
 		}
 	};
 
-	strapi.$io.disconnectSocket = (socketId, reason = 'server disconnect') => {
+	strapi.$io.disconnectSocket = (socketId) => {
 		const socket = io.server.sockets.sockets.get(socketId);
 		if (socket) {
 			socket.disconnect(true);

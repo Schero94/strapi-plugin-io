@@ -34,38 +34,58 @@
     "README.md"
   ],
   "scripts": {
-    "build": "strapi-plugin build",
+    "build": "strapi-plugin build && node scripts/build-server-bundle.mjs && npm run verify:runtime",
+    "verify:runtime": "node scripts/verify-server-bundle.mjs",
     "watch": "strapi-plugin watch",
     "watch:link": "strapi-plugin watch:link",
     "verify": "strapi-plugin verify",
-    "lint": "eslint . --fix",
+    "test": "node --test tests/*.test.js",
+    "lint": "eslint .",
     "format": "prettier --write \"./**/*.{js,json,yml,md}\""
   },
   "dependencies": {
-    "date-fns": "^4.1.0",
-    "socket.io": "^4.8.1",
-    "zod": "^3.24.1"
+    "date-fns": "^4.4.0",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.7"
+  },
+  "optionalDependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
+    "redis": "^6.3.0"
+  },
+  "overrides": {
+    "axios": "^1.20.0",
+    "sharp": "0.35.5",
+    "react-native": "0.76.9"
   },
   "devDependencies": {
-    "@strapi/sdk-plugin": "^5.3.2",
-    "@strapi/strapi": "^5.3.2",
-    "@strapi/design-system": "^2.0.0-rc.30",
-    "@strapi/icons": "^2.0.0-rc.30",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "prettier": "^3.6.2",
+    "@strapi/sdk-plugin": "^6.1.1",
+    "@strapi/strapi": "5.57.0",
+    "esbuild": "^0.28.2",
+    "@strapi/design-system": "^2.2.4",
+    "@strapi/icons": "^2.2.4",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "semantic-release": "^25.0.9",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/github": "^12.0.10",
+    "@semantic-release/git": "^11.0.1",
+    "@semantic-release/npm": "^13.2.0",
+    "@semantic-release/release-notes-generator": "^14.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.30.2",
-    "styled-components": "^6.1.19"
+    "react-router-dom": "^6.30.6",
+    "socket.io-client": "^4.8.4",
+    "styled-components": "^6.6.0"
   },
   "peerDependencies": {
-    "@strapi/sdk-plugin": "^5.3.2",
-    "@strapi/strapi": "^5.3.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.30.2",
-    "styled-components": "^6.1.19"
+    "@strapi/strapi": "^5.57.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.30.3",
+    "styled-components": "^6.0.0"
   },
   "strapi": {
     "name": "io",
@@ -74,8 +94,8 @@
     "kind": "plugin"
   },
   "engines": {
-    "node": ">=18.0.0 <=22.x.x",
-    "npm": ">=6.0.0"
+    "node": ">=22.0.0 <23.0.0",
+    "npm": ">=10.0.0"
   },
   "author": {
     "name": "@ComfortablyCoding",
@@ -92,13 +112,13 @@
       "url": "https://github.com/hrdunn"
     }
   ],
-  "homepage": "https://github.com/ComfortablyCoding/strapi-plugin-io#readme",
+  "homepage": "https://github.com/Schero94/strapi-plugin-io#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ComfortablyCoding/strapi-plugin-io.git"
+    "url": "https://github.com/Schero94/strapi-plugin-io.git"
   },
   "bugs": {
-    "url": "https://github.com/ComfortablyCoding/strapi-plugin-io/issues"
+    "url": "https://github.com/Schero94/strapi-plugin-io/issues"
   },
   "license": "MIT"
 }

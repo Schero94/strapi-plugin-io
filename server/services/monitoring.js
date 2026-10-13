@@ -1,6 +1,6 @@
 'use strict';
 
-const { pluginId } = require('../utils/pluginId');
+const { sanitizeMonitoringSnapshot, sanitizeTestEventData } = require('../utils/socket-security');
 
 /**
  * Monitoring service for Socket.IO
@@ -45,15 +45,13 @@ module.exports = ({ strapi }) => {
 				entitySubsByType[uid] = (entitySubsByType[uid] || 0) + 1;
 			});
 
-			return {
+			return sanitizeMonitoringSnapshot({
 				connected: sockets.length,
 				rooms: rooms.map((room) => ({
-					name: room,
 					members: io.sockets.adapter.rooms.get(room)?.size || 0,
 					isEntityRoom: room.includes(':') && room.match(/^(api|plugin)::/) !== null,
 				})),
 				sockets: sockets.map((socket) => ({
-					id: socket.id,
 					connected: socket.connected,
 					rooms: Array.from(socket.rooms).filter((r) => r !== socket.id),
 					entitySubscriptions: Array.from(socket.rooms)
@@ -67,9 +65,7 @@ module.exports = ({ strapi }) => {
 							};
 						}),
 					handshake: {
-						address: socket.handshake.address,
 						time: socket.handshake.time,
-						query: socket.handshake.query,
 					},
 					// Include user info if authenticated
 					user: socket.user || null,
@@ -79,7 +75,7 @@ module.exports = ({ strapi }) => {
 					byContentType: entitySubsByType,
 					rooms: entityRooms,
 				},
-			};
+			});
 		},
 
 		/**
@@ -96,30 +92,44 @@ module.exports = ({ strapi }) => {
 		 * Get recent event log
 		 */
 		getEventLog(limit = 50) {
-			return eventLog.slice(-limit);
+			const boundedLimit = Number.isInteger(limit) ? Math.max(0, Math.min(limit, 200)) : 50;
+			if (boundedLimit === 0) return [];
+			return eventLog.slice(-boundedLimit);
 		},
 
 		/**
 		 * Log an event
 		 */
 		logEvent(eventType, data = {}) {
+			if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
 			const settings = strapi.$ioSettings || {};
 			if (!settings.monitoring?.enableEventLogging) return;
 
+			const safeData = {};
+			if (typeof data.authenticated === 'boolean') safeData.authenticated = data.authenticated;
+			if (['client namespace disconnect', 'server namespace disconnect', 'ping timeout', 'transport close'].includes(data.reason)) {
+				safeData.reason = data.reason;
+			}
+			const safeType = ['connection', 'disconnect', 'error', 'test', 'entity-subscribe', 'entity-unsubscribe'].includes(eventType)
+				? eventType
+				: 'event';
+
 			const entry = {
 				timestamp: Date.now(),
-				type: eventType,
-				data,
+				type: safeType,
+				data: safeData,
 			};
 
 			eventLog.push(entry);
 
 			// Update stats
 			eventStats.totalEvents++;
-			eventStats.eventsByType[eventType] = (eventStats.eventsByType[eventType] || 0) + 1;
+			eventStats.eventsByType[safeType] = (eventStats.eventsByType[safeType] || 0) + 1;
 
 			// Trim log if too large
-			const maxSize = settings.monitoring?.maxEventLogSize || 100;
+			const configuredMaxSize = settings.monitoring?.maxEventLogSize;
+			const maxSize = Number.isInteger(configuredMaxSize) ? Math.max(0, Math.min(configuredMaxSize, 1000)) : 100;
+			if (maxSize === 0) eventLog = [];
 			if (eventLog.length > maxSize) {
 				eventLog = eventLog.slice(-maxSize);
 			}
@@ -154,9 +164,12 @@ module.exports = ({ strapi }) => {
 			if (!io) {
 				throw new Error('Socket.IO not initialized');
 			}
+			if (typeof eventName !== 'string' || eventName.length > 100 || !/^[a-zA-Z0-9:._-]+$/.test(eventName)) {
+				throw new Error('Invalid test event name');
+			}
 
 			const testData = {
-				...data,
+				...sanitizeTestEventData(data),
 				timestamp: Date.now(),
 				test: true,
 			};

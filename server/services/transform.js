@@ -2,7 +2,7 @@
 
 const { isNil, isPlainObject } = require('lodash/fp');
 
-module.exports = ({ strapi }) => {
+module.exports = () => {
 	/**
 	 * Transform query response data to API format
 	 *
