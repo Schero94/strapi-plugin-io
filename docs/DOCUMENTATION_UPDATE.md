@@ -13,7 +13,7 @@ All information from the original documentation files has been transferred and e
 **Homepage (`/`)**
 - Hero section with features
 - Quick start guide  
-- What's new in v3.0
+- What's new in the Strapi 5 fork
 - Core features overview
 - Real-world use cases
 - Browser support & requirements
@@ -334,6 +334,5 @@ Updated and made it better by: [@Schero94](https://github.com/Schero94)
 ---
 
 **Last Updated**: November 27, 2025  
-**Plugin Version**: 3.0.0  
 **Strapi Version**: 5.x
 

@@ -2,7 +2,7 @@
 
 The `$io` class is the main Socket.IO instance available globally on the Strapi object (`strapi.$io`).
 
-**Version:** 3.x for Strapi v5  
+**Applies to:** the Strapi v5 fork  
 **TypeScript:** Full type definitions included
 
 ---
@@ -17,7 +17,7 @@ const io = strapi.$io;
 io.emit({ event, schema, data });
 io.raw({ event, rooms, data });
 
-// Helper functions (new in v3.0)
+// Helper functions (added in the Strapi 5 fork)
 io.joinRoom(socketId, roomName);
 io.leaveRoom(socketId, roomName);
 io.getSocketsInRoom(roomName);

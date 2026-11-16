@@ -182,7 +182,6 @@ const socket = io('http://localhost:1337');
 
 ---
 
-**Widget Version**: 3.0.0  
 **Compatible with**: Strapi v5.x  
 **Auto-Refresh**: Every 5 seconds  
 **Location**: Admin Dashboard Home Page

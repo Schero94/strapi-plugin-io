@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Strapi Socket.IO Plugin API Reference",
-  "version": "3.0.0",
+  "versionSource": "package.json version field / latest GitHub release",
   "description": "Token-optimized API reference for AI assistants and code editors",
   
   "quickStart": {
-    "install": "npm install strapi-plugin-io",
+    "install": "Fork releases are GitHub-only: clone a release tag of https://github.com/Schero94/strapi-plugin-io, run npm ci --legacy-peer-deps, npm run build and npm pack, then install the .tgz in the Strapi app. The npm name strapi-plugin-io is upstream-owned.",
     "minimalConfig": {
       "io": {
         "enabled": true,
@@ -266,7 +266,6 @@
   },
   
   "meta": {
-    "version": "3.0.0",
     "strapiVersion": "5.x",
     "maintainedUntil": "December 2026",
     "documentation": "See docs/ folder",

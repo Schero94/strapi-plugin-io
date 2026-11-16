@@ -44,10 +44,17 @@ features:
 
 ## Quick Start
 
-Install the plugin:
+Fork releases are published on GitHub only. The npm name `strapi-plugin-io` belongs to the upstream project, so do not install it from npm. Build a release tag and install the packed tarball (replace `vX.Y.Z` with the [latest release](https://github.com/Schero94/strapi-plugin-io/releases)):
 
 ```bash
-npm install strapi-plugin-io
+git clone --branch vX.Y.Z --depth 1 https://github.com/Schero94/strapi-plugin-io.git
+cd strapi-plugin-io
+npm ci --legacy-peer-deps
+npm run build
+npm pack
+
+# In your Strapi project
+npm install /path/to/strapi-plugin-io/strapi-plugin-io-X.Y.Z.tgz
 ```
 
 Enable in `config/plugins.js`:
@@ -88,7 +95,7 @@ socket.on('article:create', (data) => {
 });
 ```
 
-## What's New in v3.0
+## What's New in the Strapi 5 fork
 
 **Strapi v5 Support** - Built for the latest Strapi version with full compatibility
 
@@ -246,7 +253,7 @@ Configure everything visually in the admin panel:
 
 ## Requirements
 
-- Node.js 18.0.0 - 22.x
+- Node.js `>=22.0.0 <=26.x.x`
 - Strapi v5.x
 - Socket.IO 4.x
 

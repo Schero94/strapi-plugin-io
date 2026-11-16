@@ -85,7 +85,7 @@ docs/
 
 - **VitePress**: v1.6.4
 - **Vue**: v3.5.13
-- **Node**: 18.0.0 - 22.x
+- **Node**: `>=22.0.0 <=26.x.x`
 
 ---
 
@@ -275,5 +275,5 @@ MIT License - Same as the plugin
 
 **Last Updated**: November 27, 2025  
 **VitePress Version**: 1.6.4  
-**Plugin Version**: 3.0.0
+**Plugin Version**: see `package.json` or the latest GitHub release
 

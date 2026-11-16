@@ -6,44 +6,42 @@ A plugin for [Strapi CMS](https://github.com/strapi/strapi) that provides the ab
 
 **Fork documentation:** [https://schero94.github.io/strapi-plugin-io/](https://schero94.github.io/strapi-plugin-io/)
 
-[![Downloads](https://img.shields.io/npm/dm/strapi-plugin-io?style=for-the-badge)](https://img.shields.io/npm/dm/strapi-plugin-io?style=for-the-badge)
-[![Install size](https://img.shields.io/npm/l/strapi-plugin-io?style=for-the-badge)](https://img.shields.io/npm/l/strapi-plugin-io?style=for-the-badge)
 [![Fork release](https://img.shields.io/github/v/release/Schero94/strapi-plugin-io?style=for-the-badge)](https://github.com/Schero94/strapi-plugin-io/releases)
+[![License](https://img.shields.io/github/license/Schero94/strapi-plugin-io?style=for-the-badge)](./LICENSE)
+
+The current version is the latest [GitHub release](https://github.com/Schero94/strapi-plugin-io/releases) and the <code>version</code> field in <code>package.json</code>. The fork's own version line started at 1.0.0; version numbers of the upstream npm package (2.x for Strapi v4) do not apply to this fork.
 
 ## Requirements
 
-The installation requirements are the same as Strapi itself and can be found in the documentation on the [Quick Start](https://strapi.io/documentation/developer-docs/latest/getting-started/quick-start.html) page in the Prerequisites info card. This checkout requires Node.js 22 and npm 10, and its Strapi peer dependency is <code>@strapi/strapi ^5.57.0</code>.
+| Requirement | Value |
+| --- | --- |
+| Node.js | `>=22.0.0 <=26.x.x` (same range as Strapi 5.62) |
+| npm | `>=10.0.0` |
+| Strapi | `@strapi/strapi ^5.57.0` (peer dependency); acceptance host: Strapi 5.62.0 |
+| Admin peers | `react ^18`, `react-dom ^18`, `react-router-dom ^6.30.3`, `styled-components ^6`, plus `@strapi/design-system ^2.2.0` and `@strapi/icons ^2.2.0` (optional peers, provided by the Strapi admin) |
 
-### Supported Strapi versions
-
-- **v5.x.x** (Current version)
-- v4.x.x (Legacy; see older versions)
-
-**NOTE**: This version (v3.x.x+) is for Strapi v5. For Strapi v4, use version 2.x.x of the upstream plugin. This checkout is the Schero94 fork, and the npm package instructions below refer to the upstream package only.
+This fork supports Strapi 5 only. For Strapi 4, use version 2.x of the upstream package.
 
 ## Installation
 
-The public npm package is upstream-owned. The following commands install the upstream package, not this fork:
+The npm package name <code>strapi-plugin-io</code> belongs to the upstream [ComfortablyCoding project](https://github.com/ComfortablyCoding/strapi-plugin-io). Installing that name from npm installs upstream code, not this fork. This fork publishes GitHub releases only and does not publish to npm.
+
+Install the fork from GitHub. Build a release tag and install the packed tarball, so the plugin's own development dependencies (React, Design System) are not linked into your Strapi admin build:
 
 ~~~sh
-npm install strapi-plugin-io
-
-# or
-
-yarn add strapi-plugin-io
-~~~
-
-To work with this fork, clone it, build it, and install its local package directory into your Strapi application:
-
-~~~sh
-git clone https://github.com/Schero94/strapi-plugin-io.git
+# 1. Build a tagged fork release (replace vX.Y.Z with the latest release tag)
+git clone --branch vX.Y.Z --depth 1 https://github.com/Schero94/strapi-plugin-io.git
 cd strapi-plugin-io
 npm ci --legacy-peer-deps
 npm run build
+npm pack            # writes strapi-plugin-io-X.Y.Z.tgz
 
-# From the Strapi application directory:
-npm install --save file:../strapi-plugin-io
+# 2. From the Strapi application directory
+npm install /path/to/strapi-plugin-io/strapi-plugin-io-X.Y.Z.tgz
+npm run build
 ~~~
+
+The plugin key stays <code>io</code>, so the configuration below does not change. Do not install it with <code>github:Schero94/strapi-plugin-io</code>: the repository does not contain the built <code>dist</code> folder.
 
 ## Configuration
 
@@ -242,11 +240,11 @@ The server's current defaults include a maximum of 1,000 concurrent connections 
 
 Enable the Redis adapter when multiple Strapi instances need to share Socket.IO broadcasts. Redis does not remove the need to configure polling session affinity at the load balancer when polling transport is used. Test connection limits and resource use with the deployment's own workload.
 
-## Migration from v2 (Strapi v4) to v3 (Strapi v5)
+## Migration from upstream v2 (Strapi v4)
 
-Version 2 targeted Strapi v4; this v3 line targets Strapi v5. Do not assume every configuration option or API is compatible across major versions. Review the [migration guide](./docs/guide/migration.md), compare its examples with this checkout, and test the application before upgrading.
+Upstream version 2 targeted Strapi v4; this fork targets Strapi v5. Do not assume every configuration option or API is compatible across major versions. Review the [migration guide](./docs/guide/migration.md), compare its examples with this checkout, and test the application before upgrading.
 
-For the upstream package, version selection is managed by the upstream repository. This fork is not installed by running <code>npm install strapi-plugin-io@latest</code>. For local work with this fork, follow the local installation steps above.
+Upstream package versions are managed by the upstream repository. Updating the upstream npm package does not update this fork; install a newer fork release with the installation steps above.
 
 ## Development
 
