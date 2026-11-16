@@ -7,7 +7,12 @@ const externals = new Set([
   ...builtinModules,
   ...builtinModules.map((name) => `node:${name}`),
   ...Object.keys(packageJson.dependencies || {}),
+  ...Object.keys(packageJson.optionalDependencies || {}),
   ...Object.keys(packageJson.peerDependencies || {}),
+  // Strapi core packages (@strapi/utils, @strapi/database, ...) come from the host's
+  // @strapi/strapi install. Bundling them ships a second copy whose error classes and
+  // transaction context are not the ones Strapi core uses at runtime.
+  '@strapi/*',
 ]);
 
 const commonOptions = {

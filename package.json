@@ -34,7 +34,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "strapi-plugin build && node scripts/build-server-bundle.mjs && npm run verify:runtime",
+    "build": "strapi-plugin build && node scripts/build-server-bundle.mjs && npm run verify:runtime && node scripts/verify-externals.mjs",
     "verify:runtime": "node scripts/verify-server-bundle.mjs",
     "watch": "strapi-plugin watch",
     "watch:link": "strapi-plugin watch:link",
@@ -58,34 +58,51 @@
     "react-native": "0.76.9"
   },
   "devDependencies": {
-    "@strapi/sdk-plugin": "^6.1.1",
-    "@strapi/strapi": "5.57.0",
-    "esbuild": "^0.28.2",
-    "@strapi/design-system": "^2.2.4",
-    "@strapi/icons": "^2.2.4",
     "@eslint/js": "^10.0.1",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^11.0.1",
+    "@semantic-release/github": "^12.0.10",
+    "@semantic-release/npm": "^13.2.0",
+    "@semantic-release/release-notes-generator": "^14.1.1",
+    "@strapi/design-system": "^2.3.1",
+    "@strapi/icons": "^2.3.1",
+    "@strapi/sdk-plugin": "^6.1.1",
+    "@strapi/strapi": "^5.62.0",
+    "@strapi/utils": "^5.62.0",
+    "esbuild": "^0.28.2",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
-    "semantic-release": "^25.0.9",
-    "@semantic-release/changelog": "^7.0.0",
-    "@semantic-release/commit-analyzer": "^13.0.1",
-    "@semantic-release/github": "^12.0.10",
-    "@semantic-release/git": "^11.0.1",
-    "@semantic-release/npm": "^13.2.0",
-    "@semantic-release/release-notes-generator": "^14.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-intl": "^6.6.2",
     "react-router-dom": "^6.30.6",
+    "semantic-release": "^25.0.9",
     "socket.io-client": "^4.8.4",
     "styled-components": "^6.6.0"
   },
   "peerDependencies": {
+    "@strapi/design-system": "^2.2.0",
+    "@strapi/icons": "^2.2.0",
     "@strapi/strapi": "^5.57.0",
+    "@strapi/utils": "^5.57.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-intl": "^6.6.2",
     "react-router-dom": "^6.30.3",
     "styled-components": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@strapi/design-system": {
+      "optional": true
+    },
+    "@strapi/icons": {
+      "optional": true
+    },
+    "react-intl": {
+      "optional": true
+    }
   },
   "strapi": {
     "name": "io",
@@ -94,7 +111,7 @@
     "kind": "plugin"
   },
   "engines": {
-    "node": ">=22.0.0 <23.0.0",
+    "node": ">=22.0.0 <=26.x.x",
     "npm": ">=10.0.0"
   },
   "author": {
