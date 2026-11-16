@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/Schero94/strapi-plugin-io/compare/v1.0.0...v1.0.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* correct docs version, externalize Design System and target Strapi 5.62 ([#1](https://github.com/Schero94/strapi-plugin-io/issues/1)) ([f317b7a](https://github.com/Schero94/strapi-plugin-io/commit/f317b7a29509a4f0ee1f946e34c1d45e86924f42))
+
 ## [Unreleased]
 
 ### Fixed
