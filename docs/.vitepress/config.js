@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitepress';
+
+// The nav version is read from the plugin package.json so it cannot drift from releases.
+const pluginVersion = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
 
 export default defineConfig({
   title: 'Strapi Plugin IO',
@@ -93,9 +97,9 @@ export default defineConfig({
       { text: 'Examples', link: '/examples/' },
       { text: 'Ecosystem', link: '/ecosystem' },
       {
-        text: 'v3.0.0',
+        text: `v${pluginVersion}`,
         items: [
-          { text: 'Changelog', link: 'https://github.com/ComfortablyCoding/strapi-plugin-io/releases' },
+          { text: 'Changelog', link: 'https://github.com/Schero94/strapi-plugin-io/releases' },
           { text: 'Contributing', link: 'https://github.com/ComfortablyCoding/strapi-plugin-io/blob/main/CONTRIBUTING.md' }
         ]
       }

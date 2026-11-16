@@ -1,3 +1,18 @@
+## [Unreleased]
+
+### Fixed
+
+- Documentation showed plugin versions that never existed in this fork (v3.x, 3.0.0 in README, docs, VitePress nav, api-reference.json, docs/package-seo.json). The VitePress nav now reads the version from package.json, and a test fails on hard-coded version claims, wrong version lines, stale JSON version fields or install commands for the upstream-owned npm name.
+- README, docs and the Pages site documented `npm install strapi-plugin-io`, which installs the upstream package. They now document the real install path: build a GitHub release tag, `npm pack`, install the tarball.
+- `@strapi/design-system`, `@strapi/icons` and `react-intl` are optional peer dependencies and stay external in the admin build. The admin dist no longer ships a 1.8 MB Design System chunk.
+- The server bundle keeps `@strapi/*`, the optional Redis packages and declared peers external instead of inlining @strapi/utils, @strapi/database and redis (3.2 MB per format before, about 230 KB now). Lifecycle events now see Strapi's real transaction context instead of a bundled copy.
+- `engines.node` is `>=22.0.0 <=26.x.x` (was `<23.0.0`), matching Strapi 5.62.
+
+### Changed
+
+- Development dependencies: `@strapi/strapi` and `@strapi/utils` ^5.62.0, `@strapi/design-system` and `@strapi/icons` ^2.3.1. New peer dependency `@strapi/utils ^5.57.0`, provided by every Strapi 5 install.
+- `npm run build` runs `scripts/verify-externals.mjs`, which fails when a host-provided package is bundled or a dist file exceeds 400 KB.
+
 # 1.0.0 (2026-10-13)
 
 

@@ -1,6 +1,5 @@
 {
   "name": "strapi-plugin-io",
-  "version": "3.0.0",
   "description": "Socket.IO plugin for Strapi v5 CMS with OAuth authentication, real-time events, Redis adapter, and production-ready features",
   "keywords": [
     "strapi",

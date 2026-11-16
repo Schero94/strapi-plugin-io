@@ -1,6 +1,6 @@
-# Migration Guide: v2 (Strapi v4) to v3 (Strapi v5)
+# Migration Guide: upstream v2 (Strapi v4) to the Strapi 5 fork
 
-Complete guide for migrating from `strapi-plugin-io` v2.x (Strapi v4) to v3.x (Strapi v5).
+Complete guide for migrating from the upstream `strapi-plugin-io` v2.x package (Strapi v4) to this Strapi 5 fork.
 
 ---
 
@@ -16,8 +16,8 @@ The Socket.IO plugin has been updated for Strapi v5 with minimal breaking change
 
 | Plugin Version | Strapi Version | Node.js | Status |
 |----------------|----------------|---------|--------|
-| **v3.x** | v5.x | 18-22 | ✅ Current |
-| v2.x | v4.x | 14-20 | 🔒 Legacy |
+| **This fork** ([latest release](https://github.com/Schero94/strapi-plugin-io/releases)) | v5.x | `>=22.0.0 <=26.x.x` | ✅ Current |
+| Upstream v2.x (npm) | v4.x | 14-20 | 🔒 Legacy |
 
 ---
 
@@ -58,11 +58,11 @@ npm install @strapi/plugin-i18n@5 @strapi/plugin-graphql@5
 ### Step 2: Update Socket.IO Plugin
 
 ```bash
-# Remove old version
+# Remove the upstream v2 package
 npm uninstall strapi-plugin-io
 
-# Install new version
-npm install strapi-plugin-io@latest
+# Install a fork release tarball (built with npm pack, see Getting Started)
+npm install /path/to/strapi-plugin-io/strapi-plugin-io-X.Y.Z.tgz
 ```
 
 ### Step 3: Update Configuration
@@ -70,7 +70,7 @@ npm install strapi-plugin-io@latest
 **No changes needed!** Your `config/plugins.js` works as-is:
 
 ```javascript
-// config/plugins.js - Works in both v2 and v3! ✅
+// config/plugins.js - Works in both upstream v2 and this fork! ✅
 module.exports = {
   io: {
     enabled: true,
@@ -201,7 +201,7 @@ npm install @strapi/strapi@5 @strapi/plugin-users-permissions@5
 **✅ No changes needed**
 
 ```javascript
-// Works in both v2 and v3
+// Works in both upstream v2 and this fork
 contentTypes: [
   'api::article.article',
   {
@@ -215,7 +215,7 @@ contentTypes: [
 **✅ No changes needed**
 
 ```javascript
-// Works in both v2 and v3
+// Works in both upstream v2 and this fork
 events: [
   {
     name: 'connection',
@@ -230,7 +230,7 @@ events: [
 **✅ No changes needed**
 
 ```javascript
-// Works in both v2 and v3
+// Works in both upstream v2 and this fork
 hooks: {
   async init({ strapi, io }) {
     // Redis adapter setup
@@ -260,7 +260,7 @@ events: [
 ]
 ```
 
-**After (v3):**
+**After (Strapi 5 fork):**
 ```javascript
 // Exactly the same! ✅
 events: [
@@ -285,7 +285,7 @@ strapi.$io.joinRoom(socketId, 'premium-users');
 strapi.$io.sendPrivateMessage(socketId, 'notification', data);
 ```
 
-**After (v3):**
+**After (Strapi 5 fork):**
 ```javascript
 // Exactly the same! ✅
 strapi.$io.joinRoom(socketId, 'premium-users');
@@ -307,7 +307,7 @@ socket.on('article:create', (data) => {
 });
 ```
 
-**After (v3):**
+**After (Strapi 5 fork):**
 ```javascript
 // Exactly the same! ✅
 import { io } from 'socket.io-client';
@@ -352,7 +352,7 @@ Error: Cannot find module 'strapi-plugin-io'
 # Clear node_modules and reinstall
 rm -rf node_modules package-lock.json
 npm install
-npm install strapi-plugin-io@latest
+npm install /path/to/strapi-plugin-io/strapi-plugin-io-X.Y.Z.tgz
 ```
 
 ### Issue 2: TypeScript Errors
@@ -466,9 +466,9 @@ node test-socket-io.js
 
 ---
 
-## Performance Improvements in v3
+## Performance Improvements in the Strapi 5 fork
 
-### New in v3.0
+### New in the Strapi 5 fork
 - ✅ **Better Caching**: 90% reduction in DB queries
 - ✅ **Parallel Processing**: Faster event emissions
 - ✅ **Optimized Bundle**: Smaller package size
@@ -588,7 +588,7 @@ If you encounter issues during migration:
 ### ⚠️ What to Update
 - Strapi core to v5
 - All @strapi/* packages
-- Plugin to v3.x
+- Plugin to the latest fork release
 - Dependencies (npm install)
 
 ### 🎯 Migration Difficulty
@@ -598,6 +598,5 @@ If you encounter issues during migration:
 
 **Migration Guide Version**: 1.0  
 **Last Updated**: November 2025  
-**Plugin Version**: v3.0.0 → Latest  
 **Maintained by**: [@Schero94](https://github.com/Schero94)
 

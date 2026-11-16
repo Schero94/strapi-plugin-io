@@ -4,33 +4,30 @@ Get up and running with Socket.IO in your Strapi v5 application in less than 5 m
 
 ## Requirements
 
-- **Node.js**: 18.0.0 - 22.x
+- **Node.js**: `>=22.0.0 <=26.x.x`
 - **Strapi**: v5.x
-- **npm**: 6.0.0 or higher
+- **npm**: 10.0.0 or higher
 
 ::: tip Compatibility
-This version (v3.x) is designed for **Strapi v5** only. For Strapi v4, use version 2.x of this plugin.
+This fork is designed for **Strapi v5** only. For Strapi v4, use version 2.x of the upstream package. The current fork version is shown on the [releases page](https://github.com/Schero94/strapi-plugin-io/releases).
 :::
 
 ## Installation
 
 Install the plugin in your Strapi project:
 
-::: code-group
+Fork releases are published on GitHub only. The npm name `strapi-plugin-io` belongs to the upstream project, so do not install it from npm. Build a release tag and install the packed tarball (replace `vX.Y.Z` with the [latest release](https://github.com/Schero94/strapi-plugin-io/releases)):
 
-```bash [npm]
-npm install strapi-plugin-io
+```bash
+git clone --branch vX.Y.Z --depth 1 https://github.com/Schero94/strapi-plugin-io.git
+cd strapi-plugin-io
+npm ci --legacy-peer-deps
+npm run build
+npm pack
+
+# In your Strapi project
+npm install /path/to/strapi-plugin-io/strapi-plugin-io-X.Y.Z.tgz
 ```
-
-```bash [yarn]
-yarn add strapi-plugin-io
-```
-
-```bash [pnpm]
-pnpm add strapi-plugin-io
-```
-
-:::
 
 ## Basic Configuration
 

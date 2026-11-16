@@ -32,7 +32,7 @@
           </div>
           <div class="badges" aria-label="Project facts">
             <span class="badge">Strapi 5</span>
-            <span class="badge">Node 22</span>
+            <span class="badge">Node 22–26</span>
             <span class="badge">JWT handshake</span>
             <span class="badge">Optional Redis adapter</span>
           </div>
@@ -65,15 +65,18 @@
 
         <section class="section" id="install" aria-labelledby="install-title">
           <h2 id="install-title">Install and connect</h2>
-          <p class="section-lead">This checkout is the Schero94 fork. Its package name matches the upstream package, but the fork does not publish to npm.</p>
-          <div class="callout"><strong>Upstream package:</strong> <code>npm install strapi-plugin-io</code> installs the public upstream package, not this fork.</div>
-          <p>For local work on this fork, clone <a href="https://github.com/Schero94/strapi-plugin-io">the Schero94 repository</a>, install its dependencies, build it, then add its local package directory to your Strapi project.</p>
-          <div class="code-card"><div class="code-label"><span>Build the fork locally</span><span>Node 22</span></div><pre><code>cd strapi-plugin-io
+          <p class="section-lead">This checkout is the Schero94 fork. Fork releases are published on GitHub only; the fork does not publish to npm.</p>
+          <div class="callout"><strong>Package name:</strong> the npm name <code>strapi-plugin-io</code> belongs to the upstream project. Installing that name from npm installs upstream code, not this fork.</div>
+          <p>Requirements: Node.js <code>&gt;=22.0.0 &lt;=26.x.x</code>, npm 10 or later and <code>@strapi/strapi ^5.57.0</code> (acceptance host: Strapi 5.62.0). The current fork version is the latest entry on the <a href="https://github.com/Schero94/strapi-plugin-io/releases">releases page</a>.</p>
+          <p>Clone a release tag, build it, pack it, and install the tarball into your Strapi project. Installing the tarball instead of linking the folder keeps the plugin's development copies of React and the Design System out of your admin build.</p>
+          <div class="code-card"><div class="code-label"><span>Install a fork release from GitHub</span><span>Replace vX.Y.Z</span></div><pre><code>git clone --branch vX.Y.Z --depth 1 https://github.com/Schero94/strapi-plugin-io.git
+cd strapi-plugin-io
 npm ci --legacy-peer-deps
 npm run build
+npm pack
 
-# In the Strapi application, use the local package directory
-npm install --save file:../strapi-plugin-io</code></pre></div>
+# In the Strapi application
+npm install /path/to/strapi-plugin-io/strapi-plugin-io-X.Y.Z.tgz</code></pre></div>
           <p>Enable the plugin in <code>config/plugins.js</code> or <code>config/plugins.ts</code>.</p>
           <div class="code-card"><div class="code-label"><span>config/plugins.js</span></div><pre><code>module.exports = ({ env }) =&gt; ({
   io: {
